@@ -8,17 +8,26 @@ import Recipe from './models/Recipe.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5001;
 
-app.use(cors({
-  origin: 'https://recipes-bkospqr3o-jordiloos-projects.vercel.app/',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-}));
+app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Could not connect to MongoDB', err));
+// MongoDB connection
+let cachedDb = null;
+async function connectToDatabase() {
+  if (cachedDb) {
+    return cachedDb;
+  }
+  const db = await mongoose.connect(process.env.MONGODB_URI);
+  cachedDb = db;
+  return db;
+}
+
+// Middleware to ensure database connection
+app.use(async (req, res, next) => {
+  await connectToDatabase();
+  next();
+});
 
 const API_KEY = process.env.VITE_SPOONACULAR_API_KEY;
 const BASE_URL = 'https://api.spoonacular.com/recipes';
@@ -195,8 +204,19 @@ app.get('/api/recipes/:id', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });
+
+// Only listen to a port if we're running the server directly (not through Vercel)
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
 
 export default app;

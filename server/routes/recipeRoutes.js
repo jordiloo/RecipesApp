@@ -30,6 +30,5 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Add more routes for updating and deleting recipes as needed
 
 export default router;
