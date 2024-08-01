@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:5001'
+      '/api': 'https://recipes-app-9d6n-i95ckmxtk-jordiloos-projects.vercel.app/'
     }
   }
 })
